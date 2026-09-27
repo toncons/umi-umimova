@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>魚釣りゲーム - 爆釣フィーバー！</title>
+    <!-- Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Fredoka & Inter for playful arcade vibe -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Fredoka', 'Inter', sans-serif;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: #0284c7;
+        }
+        canvas {
+            display: block;
+            background: linear-gradient(to bottom, #7dd3fc 0%, #0284c7 12%, #0369a1 40%, #0f172a 100%);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            border-radius: 1rem;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body class="bg-sky-50 text-slate-800 p-2 md:p-3 w-full h-full">
+
+    <header class="w-full max-w-lg mx-auto flex justify-between items-center px-1 mb-1 shrink-0">
+        <div>
+            <h1 class="text-sm md:text-xl font-bold text-white drop-shadow-md flex items-center gap-1">
+                🎣 爆釣！フィッシング 🐠
+            </h1>
+        </div>
+        <button id="fullscreenBtn" class="bg-sky-600 hover:bg-sky-700 text-white font-bold px-2.5 py-1 rounded-xl text-xs shadow-md transition flex items-center gap-1 cursor-pointer">
+            📺 全画面
+        </button>
+    </header>
+
+    <main class="w-full max-w-lg mx-auto flex flex-col items-center relative flex-grow justify-between px-1 overflow-hidden">
+        <!-- Scoreboard & Timer Bar -->
+        <div class="w-full flex justify-between items-center bg-white/95 backdrop-blur-md px-3 py-1 rounded-2xl shadow-sm mb-1 border border-sky-200 shrink-0">
+            <div class="flex items-center gap-1.5">
+                <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">スコア</span>
+                <span id="scoreDisplay" class="text-base font-bold text-sky-600">0</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div>
+                    <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">残り</span>
+                    <span id="timeDisplay" class="text-sm font-bold text-orange-500">60秒</span>
+                </div>
+                <div>
+                    <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">目標</span>
+                    <span id="targetDisplay" class="text-sm font-bold text-emerald-600">500点</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Canvas Wrapper (iPhone Full-Size Portrait Optimized) -->
+        <div class="relative w-full flex justify-center flex-grow items-center my-1 min-h-0">
+            <canvas id="gameCanvas" width="800" height="950" class="w-full h-full cursor-pointer"></canvas>
+            
+            <!-- Message Overlay Box -->
+            <div id="messageOverlay" class="absolute inset-0 bg-black/70 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center text-white hidden p-6 text-center z-10">
+                <h2 id="overlayTitle" class="text-2xl font-bold mb-2"></h2>
+                <p id="overlayText" class="text-sm mb-4"></p>
+                <button id="nextBtn" class="bg-sky-500 hover:bg-sky-600 text-white font-bold px-6 py-2 rounded-full shadow-lg transform transition active:scale-95 text-sm cursor-pointer">
+                    もう一度プレイする
+                </button>
+            </div>
+        </div>
+
+        <div class="w-full bg-white/90 backdrop-blur-md p-1 rounded-2xl shadow-sm mb-1 border border-sky-200 grid grid-cols-2 gap-1 text-[9px] text-center font-medium shrink-0">
+            <div class="bg-amber-50 p-1 rounded-lg border border-amber-200">
+                <span class="block text-amber-700 font-bold">🐟魚(+50~150) / 🐟マグロ(+1000)</span>
+            </div>
+            <div class="bg-pink-50 p-1 rounded-lg border border-pink-200">
+                <span class="block text-pink-700 font-bold">🦐エビ(+300) / 🚢沈没船(+800)</span>
+            </div>
+        </div>
+
+        <div class="w-full flex flex-col gap-1 shrink-0 pb-1">
+            <div class="grid grid-cols-3 gap-1 max-w-[240px] mx-auto w-full">
+                <div></div>
+                <button id="upBtn" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-1.5 rounded-xl shadow-md text-xs flex items-center justify-center active:scale-98 cursor-pointer">
+                    ▲ (↑)
+                </button>
+                <div></div>
+                <button id="leftBtn" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-1.5 rounded-xl shadow-md text-xs flex items-center justify-center active:scale-98 cursor-pointer">
+                    ◀ (←)
+                </button>
+                <button id="downBtn" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-1.5 rounded-xl shadow-md text-xs flex items-center justify-center active:scale-98 cursor-pointer">
+                    ▼ (↓)
+                </button>
+                <button id="rightBtn" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-1.5 rounded-xl shadow-md text-xs flex items-center justify-center active:scale-98 cursor-pointer">
+                    (→) ▶
+                </button>
+            </div>
+            <div class="flex gap-2 max-w-sm mx-auto w-full">
+                <button id="fishBtn" class="flex-1 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-bold py-2 rounded-2xl shadow-lg transform transition active:scale-98 text-xs flex items-center justify-center gap-1 cursor-pointer">
+                    🎣 釣り糸を投げる！ (スペース)
+                </button>
+                <button id="resetBtn" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-2 rounded-2xl shadow-md transition text-xs cursor-pointer">
+                    リセット
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const targetDisplay = document.getElementById('targetDisplay');
+        const fishBtn = document.getElementById('fishBtn');
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
+        const upBtn = document.getElementById('upBtn');
+        const downBtn = document.getElementById('downBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const messageOverlay = document.getElementById('messageOverlay');
+        const overlayTitle = document.getElementById('overlayTitle');
+        const overlayText = document.getElementById('overlayText');
+        const nextBtn = document.getElementById('nextBtn');
+
+        let score = 0;
+        let timeLeft = 60;
+        let targetScore = 500;
+        let gameState = 'playing'; // 'playing', 'paused', 'gameover'
+        let timerInterval = null;
+
+        // Ensure window/canvas has focus for keys immediately on load
+        window.focus();
+        canvas.setAttribute('tabindex', '0');
+        canvas.focus();
+        window.addEventListener('click', () => canvas.focus());
+
+        // Fullscreen toggle logic
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                const docEl = document.documentElement;
+                const requestMethod = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+                
+                if (requestMethod) {
+                    requestMethod.call(docEl).catch(err => {
+                        console.log('Fullscreen request was prevented or not allowed in this preview frame.');
+                    });
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen().catch(() => {});
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            }
+        });
+
+        // Boat position allowing vertical and horizontal movement (safe upper sky/surface band y: 40 to 110)
+        const boat = {
+            x: canvas.width / 2,
+            y: 75,
+            speed: 7,
+            movingLeft: false,
+            movingRight: false,
+            movingUp: false,
+            movingDown: false,
+            isSinking: false,
+            isSkeletonSink: false,
+            isGiantOctopusSink: false,
+            sinkAngle: 0
+        };
+
+        // Hook / Line state
+        let hook = {
+            x: boat.x,
+            y: boat.y,
+            speed: 9,
+            state: 'idle', // 'idle', 'dropping', 'retracting'
+            caughtItem: null
+        };
+
+        const creatureTypes = [
+            { type: 'small', name: '小魚', points: 50, color: '#f97316', size: 22, speed: 1.8, emoji: '🐟' },
+            { type: 'medium', name: '普通の魚', points: 80, color: '#eab308', size: 28, speed: 1.4, emoji: '🐠' },
+            { type: 'large', name: '大きな魚', points: 150, color: '#3b82f6', size: 40, speed: 1.0, emoji: '🐳' },
+            { type: 'shrimp', name: 'エビ', points: 300, color: '#ec4899', size: 24, speed: 2.2, emoji: '🦐' },
+            { type: 'maguro', name: 'マグロ', points: 1000, color: '#dc2626', size: 58, speed: 1.6, emoji: '🐟' },
+            { type: 'ship', name: '沈没船', points: 800, color: '#ca8a04', size: 48, speed: 0.5, emoji: '🚢' },
+            { type: 'can', name: '空き缶', points: -50, color: '#94a3b8', size: 20, speed: 0.6, emoji: '🥤' },
+            { type: 'octopus', name: 'タコ', points: 'octopus_sink', color: '#a855f7', size: 32, speed: 1.2, emoji: '🐙' },
+            { type: 'giant_octopus', name: '大タコ', points: 'giant_octopus_sink', color: '#7e22ce', size: 54, speed: 0.9, emoji: '🦑' },
+            { type: 'skeleton', name: '骸骨', points: 'skeleton_sink', color: '#cbd5e1', size: 34, speed: 0.7, emoji: '💀' },
+            { type: 'shark', name: 'サメ', points: 'half', color: '#64748b', size: 50, speed: 2.0, emoji: '🦈' },
+            { type: 'whale', name: 'クジラ', points: 'sink', color: '#1e3a8a', size: 75, speed: 0.8, emoji: '🐋' }
+        ];
+
+        let creatures = [];
+        let pirateShip = null;
+
+        function initCreatures() {
+            creatures = [];
+            for (let i = 0; i < 35; i++) {
+                spawnCreature();
+            }
+            spawnPirateShip();
+        }
+
+        function spawnCreature() {
+            const rand = Math.random();
+            let template;
+            if (rand < 0.16) template = creatureTypes[0];
+            else if (rand < 0.30) template = creatureTypes[1];
+            else if (rand < 0.42) template = creatureTypes[2];
+            else if (rand < 0.50) template = creatureTypes[3];
+            else if (rand < 0.55) template = creatureTypes[4];
+            else if (rand < 0.62) template = creatureTypes[5];
+            else if (rand < 0.70) template = creatureTypes[6];
+            else if (rand < 0.78) template = creatureTypes[7];
+            else if (rand < 0.84) template = creatureTypes[8];
+            else if (rand < 0.89) template = creatureTypes[9];
+            else if (rand < 0.95) template = creatureTypes[10];
+            else template = creatureTypes[11];
+
+            const direction = Math.random() > 0.5 ? 1 : -1;
+            creatures.push({
+                ...template,
+                x: direction > 0 ? -100 : canvas.width + 100,
+                y: 130 + Math.random() * (canvas.height - 150),
+                vx: template.speed * direction,
+                wobble: Math.random() * 100
+            });
+        }
+
+        function spawnPirateShip() {
+            const direction = Math.random() > 0.5 ? 1 : -1;
+            pirateShip = {
+                x: direction > 0 ? -140 : canvas.width + 140,
+                y: 75,
+                vx: 2.5 * direction,
+                size: 55,
+                emoji: '🏴‍☠️'
+            };
+        }
+
+        function startGameTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (gameState === 'playing') {
+                    timeLeft--;
+                    timeDisplay.textContent = timeLeft + '秒';
+
+                    if (timeLeft <= 0) {
+                        endGame();
+                    }
+                }
+            }, 1000);
+        }
+
+        function handleFishingAction() {
+            if (gameState !== 'playing' || boat.isSinking) return;
+
+            if (hook.state === 'idle') {
+                hook.state = 'dropping';
+            } else if (hook.state === 'dropping') {
+                hook.state = 'retracting';
+            }
+        }
+
+        fishBtn.addEventListener('click', handleFishingAction);
+        
+        const setupButtonHold = (btn, onDown, onUp) => {
+            btn.addEventListener('mousedown', onDown);
+            btn.addEventListener('mouseup', onUp);
+            btn.addEventListener('mouseleave', onUp);
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); onDown(); });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); onUp(); });
+        };
+
+        setupButtonHold(leftBtn, () => boat.movingLeft = true, () => boat.movingLeft = false);
+        setupButtonHold(rightBtn, () => boat.movingRight = true, () => boat.movingRight = false);
+        setupButtonHold(upBtn, () => boat.movingUp = true, () => boat.movingUp = false);
+        setupButtonHold(downBtn, () => boat.movingDown = true, () => boat.movingDown = false);
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.code === 'KeyA') {
+                boat.movingLeft = true;
+            } else if (e.key === 'ArrowRight' || e.code === 'KeyD') {
+                boat.movingRight = true;
+            } else if (e.key === 'ArrowUp' || e.code === 'KeyW') {
+                boat.movingUp = true;
+            } else if (e.key === 'ArrowDown' || e.code === 'KeyS') {
+                e.preventDefault();
+                boat.movingDown = true;
+            } else if (e.code === 'Space') {
+                e.preventDefault();
+                handleFishingAction();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft' || e.code === 'KeyA') {
+                boat.movingLeft = false;
+            } else if (e.key === 'ArrowRight' || e.code === 'KeyD') {
+                boat.movingRight = false;
+            } else if (e.key === 'ArrowUp' || e.code === 'KeyW') {
+                boat.movingUp = false;
+            } else if (e.key === 'ArrowDown' || e.code === 'KeyS') {
+                boat.movingDown = false;
+            }
+        });
+
+        resetBtn.addEventListener('click', resetGame);
+        nextBtn.addEventListener('click', resetGame);
+
+        function update() {
+            if (gameState !== 'playing') return;
+
+            if (boat.isSinking) {
+                if (boat.isSkeletonSink || boat.isGiantOctopusSink) {
+                    boat.sinkAngle += 0.04;
+                    boat.y += 2.0;
+                    if (boat.y > canvas.height - 150) {
+                        boat.y = canvas.height - 150;
+                        boat.sinkAngle = 0;
+                    }
+                } else {
+                    boat.sinkAngle += 0.03;
+                    boat.y += 1.5;
+                    if (boat.y > canvas.height + 60) {
+                        endGameBySinking();
+                    }
+                }
+                return;
+            }
+
+            if (boat.movingLeft) boat.x -= boat.speed;
+            if (boat.movingRight) boat.x += boat.speed;
+            if (boat.movingUp) boat.y -= boat.speed;
+            if (boat.movingDown) boat.y += boat.speed;
+
+            boat.x = Math.max(60, Math.min(canvas.width - 60, boat.x));
+            boat.y = Math.max(35, Math.min(105, boat.y)); // Keep boat safely in sky/surface area y:35-105 (water surface is at y:95)
+
+            // Check collision with Octopuses when moving near surface
+            for (let c of creatures) {
+                if (c.type === 'octopus' || c.type === 'giant_octopus') {
+                    let distToBoat = Math.hypot(boat.x - c.x, boat.y - c.y);
+                    if (distToBoat < c.size + 15) {
+                        boat.isSinking = true;
+                        boat.isGiantOctopusSink = true;
+                        let msg = c.type === 'giant_octopus' ? '🦑 大タコにぶつかった！！ (5秒沈没)' : '🐙 タコにぶつかった！！ 5秒間沈没...';
+                        showFloatingText(msg, boat.x, boat.y + 40, '#7e22ce');
+                        setTimeout(() => {
+                            if (gameState === 'playing' && boat.isSinking && boat.isGiantOctopusSink) {
+                                boat.isSinking = false;
+                                boat.isGiantOctopusSink = false;
+                                boat.y = 75;
+                                boat.sinkAngle = 0;
+                                showFloatingText('✨ 水面に戻ってきた！', boat.x, boat.y + 40, '#22c55e');
+                            }
+                        }, 5000);
+                        break;
+                    }
+                }
+            }
+
+            if (pirateShip) {
+                pirateShip.x += pirateShip.vx;
+                if (pirateShip.vx > 0 && pirateShip.x > canvas.width + 140) {
+                    spawnPirateShip();
+                } else if (pirateShip.vx < 0 && pirateShip.x < -140) {
+                    spawnPirateShip();
+                }
+
+                let distToPirate = Math.hypot(boat.x - pirateShip.x, boat.y - pirateShip.y);
+                if (distToPirate < 50) {
+                    score = 0;
+                    scoreDisplay.textContent = score;
+                    showFloatingText('🏴‍☠️ 海賊船に襲われた！スコアが全部奪われた！！', boat.x, boat.y + 40, '#ef4444');
+                    spawnPirateShip();
+                }
+            }
+
+            if (hook.state === 'idle') {
+                hook.x = boat.x;
+                hook.y = boat.y;
+            }
+
+            for (let c of creatures) {
+                c.x += c.vx;
+                c.wobble += 0.05;
+                c.y += Math.sin(c.wobble) * 0.5;
+
+                if (c.vx > 0 && c.x > canvas.width + 100) {
+                    c.x = -100;
+                    c.y = 130 + Math.random() * (canvas.height - 150);
+                } else if (c.vx < 0 && c.x < -100) {
+                    c.x = canvas.width + 100;
+                    c.y = 130 + Math.random() * (canvas.height - 150);
+                }
+            }
+
+            if (hook.state === 'dropping') {
+                hook.y += hook.speed;
+
+                for (let i = creatures.length - 1; i >= 0; i--) {
+                    let c = creatures[i];
+                    let dist = Math.hypot(hook.x - c.x, hook.y - c.y);
+                    if (dist < c.size + 12) {
+                        hook.caughtItem = c;
+                        creatures.splice(i, 1);
+                        spawnCreature();
+                        hook.state = 'retracting';
+                        break;
+                    }
+                }
+
+                if (hook.y >= canvas.height - 30) {
+                    hook.state = 'retracting';
+                }
+            } else if (hook.state === 'retracting') {
+                hook.y -= hook.speed * 1.5;
+
+                if (hook.y <= boat.y) {
+                    hook.y = boat.y;
+                    hook.state = 'idle';
+
+                    if (hook.caughtItem) {
+                        processCaughtItem(hook.caughtItem);
+                        hook.caughtItem = null;
+                    }
+                }
+            }
+        }
+
+        function processCaughtItem(item) {
+            if (item.type === 'whale') {
+                boat.isSinking = true;
+                boat.isSkeletonSink = false;
+                boat.isGiantOctopusSink = false;
+                showFloatingText('🐋 クジラを釣ってしまった！！船が沈没...', boat.x, boat.y + 40, '#ef4444');
+                return;
+            } else if (item.type === 'skeleton') {
+                boat.isSinking = true;
+                boat.isSkeletonSink = true;
+                boat.isGiantOctopusSink = false;
+                showFloatingText('💀 骸骨を釣った！船が沈没... (5秒後に浮上)', boat.x, boat.y + 40, '#94a3b8');
+                setTimeout(() => {
+                    if (gameState === 'playing' && boat.isSinking && boat.isSkeletonSink) {
+                        boat.isSinking = false;
+                        boat.isSkeletonSink = false;
+                        boat.y = 75;
+                        boat.sinkAngle = 0;
+                        showFloatingText('✨ 船が浮き上がってきた！', boat.x, boat.y + 40, '#22c55e');
+                    }
+                }, 5000);
+                return;
+            } else if (item.type === 'giant_octopus' || item.type === 'octopus') {
+                boat.isSinking = true;
+                boat.isSkeletonSink = false;
+                boat.isGiantOctopusSink = true;
+                let msg = item.type === 'giant_octopus' ? '🦑 大タコに人が海に引き込まれた！！ (5秒後に復活)' : '🐙 タコを釣った！5秒間沈没...';
+                showFloatingText(msg, boat.x, boat.y + 40, '#7e22ce');
+                setTimeout(() => {
+                    if (gameState === 'playing' && boat.isSinking && boat.isGiantOctopusSink) {
+                        boat.isSinking = false;
+                        boat.isGiantOctopusSink = false;
+                        boat.y = 75;
+                        boat.sinkAngle = 0;
+                        showFloatingText('✨ 水中から戻ってきた！', boat.x, boat.y + 40, '#22c55e');
+                    }
+                }, 5000);
+                return;
+            } else if (item.type === 'shark') {
+                score = Math.floor(score / 2);
+                showFloatingText('🦈 サメに襲われた！スコア半分...', boat.x, boat.y + 40, '#ef4444');
+            } else if (item.type === 'maguro') {
+                score += item.points;
+                showFloatingText('🐟 巨大マグロを釣り上げた！！ (+1000)', boat.x, boat.y + 40, '#dc2626');
+            } else if (item.type === 'ship') {
+                score += item.points;
+                showFloatingText('🚢 沈没船を引き揚げた！！ (+800)', boat.x, boat.y + 40, '#eab308');
+            } else if (item.type === 'can') {
+                score += item.points;
+                showFloatingText('🥤 空き缶を釣った... (-50)', boat.x, boat.y + 40, '#64748b');
+            } else {
+                score += item.points;
+                let color = item.type === 'shrimp' ? '#ec4899' : '#22c55e';
+                showFloatingText(`${item.emoji} ${item.name} GET! (+${item.points})`, boat.x, boat.y + 40, color);
+            }
+
+            scoreDisplay.textContent = score;
+        }
+
+        let floatingTexts = [];
+        function showFloatingText(text, x, y, color) {
+            floatingTexts.push({ text, x, y, alpha: 1.0, color });
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Sky background (top 95px)
+            ctx.fillStyle = '#bae6fd';
+            ctx.fillRect(0, 0, canvas.width, 95);
+            ctx.fillStyle = '#e0f2fe';
+            ctx.beginPath();
+            ctx.arc(150, 35, 30, 0, Math.PI * 2);
+            ctx.arc(400, 25, 45, 0, Math.PI * 2);
+            ctx.arc(680, 35, 35, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Water surface line
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(0, 95);
+            for (let x = 0; x < canvas.width; x += 35) {
+                ctx.lineTo(x, 95 + Math.sin(Date.now() / 200 + x) * 6);
+            }
+            ctx.stroke();
+
+            // Pirate Ship
+            if (pirateShip) {
+                ctx.save();
+                ctx.translate(pirateShip.x, pirateShip.y);
+                if (pirateShip.vx < 0) ctx.scale(-1, 1);
+                ctx.font = '40px sans-serif';
+                ctx.fillText(pirateShip.emoji, -20, 12);
+                ctx.restore();
+            }
+
+            // Boat
+            ctx.save();
+            ctx.translate(boat.x, boat.y);
+            if (boat.isSinking) ctx.rotate(boat.sinkAngle);
+
+            ctx.fillStyle = '#b45309';
+            ctx.beginPath();
+            ctx.moveTo(-40, 22);
+            ctx.lineTo(40, 22);
+            ctx.lineTo(28, 46);
+            ctx.lineTo(-28, 46);
+            ctx.closePath();
+            ctx.fill();
+
+            if (!boat.isGiantOctopusSink) {
+                ctx.fillStyle = '#fde68a';
+                ctx.beginPath();
+                ctx.arc(0, 8, 10, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#78350f';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(0, 8);
+                ctx.lineTo(25, -14);
+                ctx.stroke();
+            } else {
+                ctx.font = '24px sans-serif';
+                ctx.fillText('🐙', -12, 24);
+            }
+            ctx.restore();
+
+            // Fishing Line & Hook
+            if ((!boat.isSinking || boat.y < canvas.height) && !boat.isGiantOctopusSink) {
+                const rodTipX = boat.x + 25;
+                const rodTipY = boat.y - 14;
+                ctx.strokeStyle = '#e2e8f0';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(rodTipX, rodTipY);
+                ctx.lineTo(hook.x, hook.y);
+                ctx.stroke();
+
+                ctx.fillStyle = '#94a3b8';
+                ctx.beginPath();
+                ctx.arc(hook.x, hook.y, 6, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (hook.caughtItem) {
+                    ctx.font = '26px sans-serif';
+                    ctx.fillText(hook.caughtItem.emoji, hook.x - 13, hook.y + 20);
+                }
+            }
+
+            // Creatures
+            for (let c of creatures) {
+                ctx.save();
+                ctx.translate(c.x, c.y);
+                if (c.vx < 0) ctx.scale(-1, 1);
+                ctx.font = `${c.size}px sans-serif`;
+                ctx.fillText(c.emoji, -c.size / 2, c.size / 2);
+                ctx.restore();
+            }
+
+            // Floating text
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                let ft = floatingTexts[i];
+                ctx.fillStyle = ft.color;
+                ctx.font = 'bold 15px Fredoka, sans-serif';
+                ctx.fillText(ft.text, ft.x - 90, ft.y);
+                ft.y -= 1.3;
+                ft.alpha -= 0.02;
+                if (ft.alpha <= 0) floatingTexts.splice(i, 1);
+            }
+        }
+
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        function endGame() {
+            gameState = 'gameover';
+            clearInterval(timerInterval);
+
+            if (score >= targetScore) {
+                showOverlay('大漁です！大成功！ 🎉', `目標達成！最終スコア: ${score}点`);
+            } else {
+                showOverlay('タイムアップ... 🌊', `目標の${targetScore}点に届きませんでした。スコア: ${score}点`);
+            }
+        }
+
+        function endGameBySinking() {
+            gameState = 'gameover';
+            clearInterval(timerInterval);
+            showOverlay('船が沈没しました... 💀', `クジラを釣ってしまい船が沈みました。スコア: ${score}点`);
+        }
+
+        function showOverlay(title, text) {
+            overlayTitle.textContent = title;
+            overlayText.textContent = text;
+            messageOverlay.classList.remove('hidden');
+        }
+
+        function hideOverlay() {
+            messageOverlay.classList.add('hidden');
+        }
+
+        function resetGame() {
+            score = 0;
+            timeLeft = 60;
+            scoreDisplay.textContent = score;
+            timeDisplay.textContent = timeLeft + '秒';
+            targetDisplay.textContent = targetScore + '点';
+            boat.x = canvas.width / 2;
+            boat.y = 75;
+            boat.isSinking = false;
+            boat.isSkeletonSink = false;
+            boat.isGiantOctopusSink = false;
+            boat.sinkAngle = 0;
+            hook.state = 'idle';
+            hook.x = boat.x;
+            hook.y = boat.y;
+            hook.caughtItem = null;
+            hideOverlay();
+            initCreatures();
+            gameState = 'playing';
+            startGameTimer();
+        }
+
+        window.onload = function() {
+            initCreatures();
+            startGameTimer();
+            loop();
+        };
+    </script>
+</body>
+</html>
