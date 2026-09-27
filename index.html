@@ -353,7 +353,7 @@
             if (boat.movingDown) boat.y += boat.speed;
 
             boat.x = Math.max(60, Math.min(canvas.width - 60, boat.x));
-            boat.y = Math.max(35, Math.min(105, boat.y)); // Keep boat safely in sky/surface area y:35-105 (water surface is at y:95)
+            boat.y = Math.max(30, Math.min(130, boat.y)); // Expanded vertical range for greater maneuverability
 
             // Check collision with Octopuses when moving near surface
             for (let c of creatures) {
