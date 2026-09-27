@@ -90,28 +90,37 @@
             </div>
         </div>
 
-        <div class="w-full flex flex-col gap-2 shrink-0 pb-2">
-            <div class="grid grid-cols-3 gap-2 max-w-[280px] mx-auto w-full">
-                <div></div>
-                <button id="upBtn" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-3 rounded-2xl shadow-md text-base flex items-center justify-center active:scale-95 cursor-pointer">
-                    ▲ (↑)
-                </button>
-                <div></div>
-                <button id="leftBtn" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-3 rounded-2xl shadow-md text-base flex items-center justify-center active:scale-95 cursor-pointer">
-                    ◀ (←)
-                </button>
-                <button id="downBtn" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-3 rounded-2xl shadow-md text-base flex items-center justify-center active:scale-95 cursor-pointer">
-                    ▼ (↓)
-                </button>
-                <button id="rightBtn" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-3 rounded-2xl shadow-md text-base flex items-center justify-center active:scale-95 cursor-pointer">
-                    (→) ▶
-                </button>
+        <div class="w-full flex flex-col gap-2 shrink-0 pb-2 items-center">
+            <div class="flex items-center justify-center gap-3 w-full max-w-md">
+                <!-- D-Pad Directional Controls -->
+                <div class="grid grid-cols-3 gap-2 w-[220px]">
+                    <div></div>
+                    <button id="upBtn" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-4 rounded-2xl shadow-md text-lg flex items-center justify-center active:scale-95 cursor-pointer">
+                        ▲
+                    </button>
+                    <div></div>
+                    <button id="leftBtn" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-4 rounded-2xl shadow-md text-lg flex items-center justify-center active:scale-95 cursor-pointer">
+                        ◀
+                    </button>
+                    <button id="downBtn" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-4 rounded-2xl shadow-md text-lg flex items-center justify-center active:scale-95 cursor-pointer">
+                        ▼
+                    </button>
+                    <button id="rightBtn" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-4 rounded-2xl shadow-md text-lg flex items-center justify-center active:scale-95 cursor-pointer">
+                        ▶
+                    </button>
+                </div>
+                
+                <!-- Fishing action button placed right next to directional controls -->
+                <div class="flex flex-col gap-2 flex-grow max-w-[150px]">
+                    <button id="fishBtn" class="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-bold py-4 px-3 rounded-2xl shadow-lg transform transition active:scale-98 text-xs md:text-sm flex flex-col items-center justify-center gap-1 cursor-pointer h-full min-h-[96px]">
+                        <span class="text-xl">🎣</span>
+                        <span>釣り糸を投げる</span>
+                    </button>
+                </div>
             </div>
-            <div class="flex gap-2 max-w-md mx-auto w-full">
-                <button id="fishBtn" class="flex-1 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-bold py-3.5 rounded-2xl shadow-lg transform transition active:scale-98 text-sm md:text-base flex items-center justify-center gap-1.5 cursor-pointer">
-                    🎣 釣り糸を投げる！ (スペース)
-                </button>
-                <button id="resetBtn" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-3.5 rounded-2xl shadow-md transition text-xs md:text-sm cursor-pointer">
+
+            <div class="flex gap-2 max-w-sm mx-auto w-full px-2">
+                <button id="resetBtn" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-xl shadow-md transition text-xs cursor-pointer">
                     リセット
                 </button>
             </div>
